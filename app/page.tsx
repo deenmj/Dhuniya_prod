@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Bell,
   ChevronDown,
@@ -84,12 +84,33 @@ const ORDERS_SEED: Order[] = [
 ];
 
 // --- Helpers ---
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const money = (v: number) => `₹${v.toLocaleString("en-IN")}`;
-const dateLabel = (v: string) =>
-  new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(
-    new Date(`${v}T12:00:00`)
-  );
-const today = () => new Date().toISOString().split("T")[0];
+const dateLabel = (v: string) => {
+  if (!v) return "";
+  const parts = v.split("-");
+  if (parts.length === 3) {
+    const day = parseInt(parts[2], 10);
+    const m = parseInt(parts[1], 10);
+    const month = MONTHS[m - 1] ?? parts[1];
+    return `${day} ${month} ${parts[0]}`;
+  }
+  return v;
+};
+
+const getTodayStr = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    } catch {}
+  }
+  return "2026-10-30";
+};
+
 let nextOrderNum = 1049;
 const genOrderId = () => `ORD-${nextOrderNum++}`;
 
@@ -123,6 +144,22 @@ function StatusDropdown({ value, onChange }: { value: string; onChange: (v: stri
 }
 
 function PageHeader({ title, onMenu, action }: { title: string; onMenu: () => void; action?: React.ReactNode }) {
+  const [headerDate, setHeaderDate] = useState("Wednesday, October 30, 2026");
+
+  useEffect(() => {
+    try {
+      const now = new Date();
+      setHeaderDate(
+        new Intl.DateTimeFormat("en-IN", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(now)
+      );
+    } catch {}
+  }, []);
+
   return (
     <header className="flex min-h-[76px] items-center justify-between border-b border-[#eadfd7] bg-white/90 backdrop-blur-sm px-5 sm:px-8 lg:px-10 sticky top-0 z-20">
       <div className="flex items-center gap-3">
@@ -130,7 +167,7 @@ function PageHeader({ title, onMenu, action }: { title: string; onMenu: () => vo
           <Menu className="size-5" />
         </button>
         <div>
-          <p className="text-xs font-medium text-[#aaa19a]">{dateLabel(today())}</p>
+          <p className="text-xs font-medium text-[#aaa19a]">{headerDate}</p>
           <h1 className="mt-0.5 font-serif text-xl font-semibold">{title}</h1>
         </div>
       </div>
@@ -566,7 +603,7 @@ function OrderModal({
     customer: initial?.customer ?? "",
     productId: initial?.productId?.toString() ?? (activeProducts[0]?.id?.toString() ?? ""),
     qty: initial?.qty?.toString() ?? "",
-    deliveryDate: initial?.deliveryDate ?? today(),
+    deliveryDate: initial?.deliveryDate ?? "2026-10-30",
     rate: initial?.rate?.toString() ?? "",
     notes: initial?.notes ?? "",
   });
@@ -883,7 +920,6 @@ function Dashboard({ orders, products, setActive }: {
 }) {
   const [expandCustomers, setExpandCustomers] = useState(false);
 
-  const todayStr = today();
   const activeOrders = orders.filter((o) => !["Completed", "Cancelled"].includes(o.status));
 
   const totalKg = activeOrders.reduce((sum, o) => sum + o.qty, 0);
@@ -918,7 +954,7 @@ function Dashboard({ orders, products, setActive }: {
           <Factory className="size-4" /> Production overview
         </div>
         <h2 className="mt-2 font-serif text-[36px] font-semibold">Today&apos;s sweet list</h2>
-        <p className="mt-1 text-sm text-[#968d86]">{dateLabel(todayStr)} · Keep every order moving smoothly.</p>
+        <p className="mt-1 text-sm text-[#968d86]">Keep every order moving smoothly.</p>
 
         {/* Stats */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -1083,7 +1119,7 @@ export default function Home() {
   const addOrder = (data: OrderFormData) => {
     const newOrder: Order = {
       id: genOrderId(),
-      date: today(),
+      date: getTodayStr(),
       deliveryDate: data.deliveryDate,
       customer: data.customer,
       productId: Number(data.productId),
