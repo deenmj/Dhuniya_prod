@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Bell,
   Calendar,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -59,13 +60,13 @@ const STATUS_OPTIONS = [
 
 type Status = (typeof STATUS_OPTIONS)[number];
 
-const STATUS_STYLES: Record<Status, { bg: string; text: string; dot: string }> = {
-  Pending: { bg: "bg-[#f4f0ed]", text: "text-[#756a62]", dot: "bg-[#b4a89e]" },
-  Confirmed: { bg: "bg-[#e8f0fe]", text: "text-[#1a56bb]", dot: "bg-[#1a56bb]" },
-  "In Production": { bg: "bg-[#fff7d7]", text: "text-[#a36f00]", dot: "bg-[#e9a000]" },
-  "Ready to Bill": { bg: "bg-[#eaf7ef]", text: "text-[#29804a]", dot: "bg-[#29804a]" },
-  Completed: { bg: "bg-[#e7f5ed]", text: "text-[#217346]", dot: "bg-[#217346]" },
-  Cancelled: { bg: "bg-[#fbe9e7]", text: "text-[#b33a2b]", dot: "bg-[#b33a2b]" },
+const STATUS_STYLES: Record<Status, { bg: string; text: string; dot: string; border: string }> = {
+  Pending: { bg: "bg-slate-100", text: "text-slate-700", dot: "bg-slate-400", border: "border-slate-200" },
+  Confirmed: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-600", border: "border-blue-200" },
+  "In Production": { bg: "bg-amber-50", text: "text-amber-800", dot: "bg-amber-500", border: "border-amber-200" },
+  "Ready to Bill": { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-600", border: "border-emerald-200" },
+  Completed: { bg: "bg-teal-50", text: "text-teal-800", dot: "bg-teal-600", border: "border-teal-200" },
+  Cancelled: { bg: "bg-rose-50", text: "text-rose-700", dot: "bg-rose-500", border: "border-rose-200" },
 };
 
 // --- Seed Data ---
@@ -80,7 +81,7 @@ const ORDERS_SEED: Order[] = [
   { id: "ORD-1047", date: "2026-10-30", deliveryDate: "2026-10-31", customer: "Anita Caterers", productId: 1, qty: 6.5, status: "In Production" },
   { id: "ORD-1046", date: "2026-10-30", deliveryDate: "2026-11-01", customer: "Ramesh Kumar", productId: 1, qty: 4, status: "Confirmed" },
   { id: "ORD-1045", date: "2026-10-30", deliveryDate: "2026-10-30", customer: "The Grand Hotel", productId: 2, qty: 7, status: "Ready to Bill" },
-  { id: "ORD-1044", date: "2026-10-30", deliveryDate: "2026-10-30", customer: "Priya Events", productId: 2, qty: 5, status: "Ready to Bill", notes: "Gift boxes" },
+  { id: "ORD-1044", date: "2026-10-30", deliveryDate: "2026-10-30", customer: "Priya Events", productId: 2, qty: 5, status: "Ready to Bill", notes: "Gift packaging" },
   { id: "ORD-1043", date: "2026-10-30", deliveryDate: "2026-11-02", customer: "Rajasthan Bhoj", productId: 3, qty: 5.25, status: "Confirmed" },
   { id: "ORD-1042", date: "2026-10-30", deliveryDate: "2026-11-03", customer: "Neha Gupta", productId: 3, qty: 3.5, status: "Pending" },
   { id: "ORD-1041", date: "2026-10-29", deliveryDate: "2026-10-30", customer: "Meera Banquets", productId: 2, qty: 12, status: "Ready to Bill" },
@@ -121,7 +122,7 @@ const getHandoverBadge = (deliveryDateStr: string) => {
   if (!deliveryDateStr) return null;
   const today = getTodayStr();
   if (deliveryDateStr === today) {
-    return { label: "Handover Today", style: "bg-[#fbe9e7] text-[#b33a2b] border-[#f4c7c3]" };
+    return { label: "Handover Today", style: "bg-rose-50 text-rose-700 border-rose-200" };
   }
   try {
     const todayDate = new Date(today);
@@ -130,11 +131,11 @@ const getHandoverBadge = (deliveryDateStr: string) => {
     const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
 
     if (diffDays === 1) {
-      return { label: "Tomorrow", style: "bg-[#fff7d7] text-[#946200] border-[#fae498]" };
+      return { label: "Tomorrow", style: "bg-amber-50 text-amber-700 border-amber-200" };
     } else if (diffDays < 0) {
-      return { label: `${Math.abs(diffDays)}d Overdue`, style: "bg-[#fbe9e7] text-[#b33a2b] border-[#f4c7c3]" };
+      return { label: `${Math.abs(diffDays)}d Overdue`, style: "bg-red-50 text-red-700 border-red-200 font-bold" };
     } else if (diffDays <= 3) {
-      return { label: `In ${diffDays} days`, style: "bg-[#e8f0fe] text-[#1a56bb] border-[#c2d7fc]" };
+      return { label: `In ${diffDays} days`, style: "bg-blue-50 text-blue-700 border-blue-200" };
     }
   } catch {}
   return null;
@@ -144,7 +145,7 @@ const getHandoverBadge = (deliveryDateStr: string) => {
 function Badge({ status }: { status: string }) {
   const s = STATUS_STYLES[status as Status] ?? STATUS_STYLES.Pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${s.bg} ${s.text}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${s.bg} ${s.text} ${s.border}`}>
       <span className={`size-1.5 rounded-full ${s.dot}`} />
       {status}
     </span>
@@ -158,13 +159,13 @@ function StatusDropdown({ value, onChange }: { value: string; onChange: (v: stri
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`appearance-none cursor-pointer rounded-full pl-3 pr-7 py-1 text-[11px] font-semibold border-0 outline-none focus:ring-2 focus:ring-[#e85d04]/30 ${s.bg} ${s.text}`}
+        className={`appearance-none cursor-pointer rounded-full pl-3 pr-7 py-1 text-[11px] font-semibold border outline-none focus:ring-2 focus:ring-amber-500/30 transition-all ${s.bg} ${s.text} ${s.border}`}
       >
         {STATUS_OPTIONS.map((opt) => (
           <option key={opt} value={opt}>{opt}</option>
         ))}
       </select>
-      <ChevronDown className={`pointer-events-none absolute right-1.5 size-3 ${s.text}`} />
+      <ChevronDown className={`pointer-events-none absolute right-2 size-3 ${s.text}`} />
     </div>
   );
 }
@@ -187,20 +188,31 @@ function PageHeader({ title, onMenu, action }: { title: string; onMenu: () => vo
   }, []);
 
   return (
-    <header className="flex min-h-[76px] items-center justify-between border-b border-[#eadfd7] bg-white/90 backdrop-blur-sm px-5 sm:px-8 lg:px-10 sticky top-0 z-20">
+    <header className="flex min-h-[72px] items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-5 sm:px-8 lg:px-10 sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
       <div className="flex items-center gap-3">
-        <button className="text-[#766e68] lg:hidden" onClick={onMenu} aria-label="Open navigation">
+        <button
+          className="flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden transition-colors"
+          onClick={onMenu}
+          aria-label="Open navigation"
+        >
           <Menu className="size-5" />
         </button>
         <div>
-          <p className="text-xs font-medium text-[#aaa19a]">{headerDate}</p>
-          <h1 className="mt-0.5 font-serif text-xl font-semibold">{title}</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{headerDate}</p>
+          <h1 className="mt-0.5 text-xl font-bold tracking-tight text-slate-900">{title}</h1>
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <button className="relative flex size-9 items-center justify-center rounded-full text-[#817872] hover:bg-[#fff4ed]" aria-label="Notifications">
-          <Bell className="size-[18px]" />
-          <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-[#e85d04]" />
+        <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-medium">Dhuniya Production Live</span>
+        </div>
+        <button
+          className="relative flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          aria-label="Notifications"
+        >
+          <Bell className="size-[17px]" />
+          <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-500 ring-2 ring-white" />
         </button>
         {action}
       </div>
@@ -210,18 +222,24 @@ function PageHeader({ title, onMenu, action }: { title: string; onMenu: () => vo
 
 function ConfirmDialog({ title, message, onConfirm, onCancel }: { title: string; message: string; onConfirm: () => void; onCancel: () => void }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#fbe9e7] mx-auto">
-          <Trash2 className="size-5 text-[#b33a2b]" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex size-12 items-center justify-center rounded-full bg-rose-50 border border-rose-100 mx-auto">
+          <Trash2 className="size-5 text-rose-600" />
         </div>
-        <h3 className="mt-4 text-center font-serif text-lg font-semibold">{title}</h3>
-        <p className="mt-2 text-center text-sm text-[#968d86]">{message}</p>
+        <h3 className="mt-4 text-center text-lg font-bold text-slate-900">{title}</h3>
+        <p className="mt-1.5 text-center text-sm text-slate-500">{message}</p>
         <div className="mt-6 flex gap-3">
-          <button onClick={onCancel} className="flex-1 rounded-xl border border-[#eadfd7] py-2.5 text-sm font-semibold text-[#766e68] hover:bg-[#faf5f1]">
+          <button
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
             Cancel
           </button>
-          <button onClick={onConfirm} className="flex-1 rounded-xl bg-[#b33a2b] py-2.5 text-sm font-semibold text-white hover:bg-[#9a2f22]">
+          <button
+            onClick={onConfirm}
+            className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 transition-colors shadow-xs"
+          >
             Delete
           </button>
         </div>
@@ -241,42 +259,74 @@ function Sidebar({ active, setActive, open, setOpen, orderCount }: {
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-30 flex w-[258px] flex-col border-r border-[#eadfd7] bg-white px-5 py-6 transition-transform duration-200 lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center gap-2.5 px-2">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-[#e85d04] text-white">
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden transition-opacity"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-slate-800 bg-[#0f172a] text-slate-200 px-5 py-6 transition-transform duration-200 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Brand */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-lg shadow-amber-500/20">
             <Sparkles className="size-5" />
           </div>
           <div>
-            <p className="font-serif text-[21px] font-semibold leading-none">Dhuniya</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaa19a]">Production desk</p>
+            <p className="text-[19px] font-bold tracking-tight text-white leading-tight">Dhuniya Products</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400">Eastern Traditional Sweets</p>
           </div>
         </div>
-        <p className="mt-11 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b8afa8]">Workspace</p>
+
+        {/* Section title */}
+        <p className="mt-9 px-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
+
+        {/* Navigation */}
         <nav className="mt-3 flex flex-col gap-1.5">
-          {items.map(({ label, Icon }) => (
-            <button
-              key={label}
-              onClick={() => { setActive(label); setOpen(false); }}
-              className={`flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors ${active === label ? "bg-[#fff0e6] text-[#e85d04]" : "text-[#766e68] hover:bg-[#faf5f1]"}`}
-            >
-              <Icon className="size-[18px]" />
-              <span>{label}</span>
-              {label === "Orders" && (
-                <span className="ml-auto rounded-full bg-[#ffe3d2] px-2 py-0.5 text-[11px] font-semibold text-[#c65016]">
-                  {orderCount}
-                </span>
-              )}
-            </button>
-          ))}
+          {items.map(({ label, Icon }) => {
+            const isActive = active === label;
+            return (
+              <button
+                key={label}
+                onClick={() => { setActive(label); setOpen(false); }}
+                className={`flex h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-all ${
+                  isActive
+                    ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/70"
+                }`}
+              >
+                <Icon className={`size-[18px] ${isActive ? "text-white" : "text-slate-400"}`} />
+                <span>{label}</span>
+                {label === "Orders" && (
+                  <span
+                    className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                      isActive
+                        ? "bg-amber-700 text-white"
+                        : "bg-slate-800 text-amber-300 border border-slate-700"
+                    }`}
+                  >
+                    {orderCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
-        <div className="mt-auto rounded-2xl bg-[#fff7f1] p-4">
-          <div className="flex items-center gap-2 text-[#e85d04]">
+
+        {/* Bottom card */}
+        <div className="mt-auto rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+          <div className="flex items-center gap-2 text-amber-400">
             <Factory className="size-4" />
-            <span className="text-xs font-semibold">Eastern Traditional Sweets</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Dhuniya Products</span>
           </div>
-          <p className="mt-2 text-[13px] leading-5 text-[#8c8179]">
-            Dhuniya products · KDS/1597
+          <p className="mt-1 text-xs text-slate-400">
+            Eastern Traditional Sweets · KDS/1597
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            138, France City, Maruthamunai
           </p>
         </div>
       </aside>
@@ -290,89 +340,96 @@ function Invoice({ order, product, rate, onClose }: {
 }) {
   const total = order.qty * rate;
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#2c211b]/40 p-4 backdrop-blur-sm">
-      <div className="mx-auto my-5 max-w-[760px] rounded-2xl border border-[#eadfd7] bg-white shadow-2xl">
-        <div className="border-b border-[#f0e8e2] px-6 py-5">
-          <p className="font-serif text-2xl font-semibold text-[#312d2a]">Dhuniya products</p>
-          <p className="mt-1 text-xs text-[#766e68]">Eastern Traditional Sweet</p>
-          <p className="mt-2 text-[11px] leading-5 text-[#968d86]">
-            Registration: KDS/1597 · Mobile: 0756656135 · 138, France City, Maruthamunai
-          </p>
-        </div>
-        <div className="flex items-center justify-between border-b border-[#f0e8e2] px-6 py-5 print:hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs flex items-center justify-center">
+      <div className="my-5 w-full max-w-[760px] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+        <div className="border-b border-slate-200 px-6 py-5 bg-slate-50 flex items-center justify-between print:hidden">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e85d04]">Invoice preview</p>
-            <h2 className="font-serif text-xl font-semibold">Bill for {order.id}</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Official Bill</p>
+            <h2 className="text-lg font-bold text-slate-900">Invoice for {order.id}</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer data-icon="inline-start" /> Print Bill
+            <Button variant="outline" onClick={() => window.print()} className="border-slate-300 text-slate-700">
+              <Printer className="size-4" /> Print Bill
             </Button>
-            <Button onClick={() => window.print()} className="bg-[#e85d04] text-white hover:bg-[#c94f05]">
-              <Download data-icon="inline-start" /> Download PDF
+            <Button onClick={() => window.print()} className="bg-amber-600 text-white hover:bg-amber-700">
+              <Download className="size-4" /> Download PDF
             </Button>
-            <button onClick={onClose} className="ml-2 rounded-lg p-2 text-[#9d928a] hover:bg-[#fff4ed]" aria-label="Close invoice">
+            <button onClick={onClose} className="ml-1 rounded-lg p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700" aria-label="Close invoice">
               <X className="size-4" />
             </button>
           </div>
         </div>
         <article className="p-8 sm:p-12">
-          <div className="flex flex-col justify-between gap-6 border-b border-[#eadfd7] pb-8 sm:flex-row">
+          {/* Header */}
+          <div className="flex flex-col justify-between gap-6 border-b border-slate-200 pb-8 sm:flex-row">
             <div>
-              <div className="flex items-center gap-2 text-[#e85d04]">
-                <Sparkles className="size-5" />
-                <span className="font-serif text-3xl font-semibold text-[#312d2a]">Dhuniya</span>
+              <div className="flex items-center gap-2 text-amber-600">
+                <Sparkles className="size-6" />
+                <span className="text-2xl font-bold tracking-tight text-slate-900">Dhuniya Products</span>
               </div>
-              <p className="mt-2 text-sm text-[#8d8178]">Eastern traditional sweets</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-amber-700">Eastern Traditional Sweets</p>
+              <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                Registration: KDS/1597 · Mobile: 0756656135<br />
+                138, France City, Maruthamunai
+              </p>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a18f84]">Invoice</p>
-              <p className="mt-1 font-serif text-2xl font-semibold">{order.id}</p>
-              <p className="mt-1 text-sm text-[#8d8178]">{dateLabel(order.date)}</p>
+              <span className="inline-block rounded-md bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-amber-800">
+                Customer Invoice
+              </span>
+              <p className="mt-2 text-2xl font-mono font-bold text-slate-900">{order.id}</p>
+              <p className="mt-1 text-xs text-slate-500">Date: {dateLabel(order.date)}</p>
             </div>
           </div>
-          <div className="grid gap-5 border-b border-[#eadfd7] py-8 sm:grid-cols-2">
+
+          {/* Details */}
+          <div className="grid gap-6 border-b border-slate-200 py-8 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a18f84]">Billed to</p>
-              <p className="mt-2 text-lg font-semibold">{order.customer}</p>
-              <p className="mt-1 text-sm text-[#8d8178]">Customer order · {order.id}</p>
-              {order.notes && <p className="mt-1 text-sm text-[#8d8178]">Note: {order.notes}</p>}
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Billed To</p>
+              <p className="mt-1.5 text-lg font-bold text-slate-900">{order.customer}</p>
+              <p className="mt-1 text-sm text-slate-600">Order ID: {order.id}</p>
+              {order.notes && <p className="mt-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 inline-block">Note: {order.notes}</p>}
             </div>
             <div className="sm:text-right">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a18f84]">Order date</p>
-              <p className="mt-2 text-lg font-semibold">{dateLabel(order.date)}</p>
-              <p className="mt-1 text-sm text-[#8d8178]">Delivery: {dateLabel(order.deliveryDate)}</p>
-              <p className="mt-1 text-sm text-[#8d8178]">Payment due on receipt</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Handover Schedule</p>
+              <p className="mt-1.5 text-lg font-bold text-slate-900">{dateLabel(order.deliveryDate)}</p>
+              <p className="mt-1 text-sm text-slate-500">Order Status: <span className="font-semibold text-slate-800">{order.status}</span></p>
+              <p className="mt-1 text-xs text-slate-400">Payment Due on Receipt</p>
             </div>
           </div>
+
+          {/* Table */}
           <table className="mt-8 w-full text-left text-sm">
-            <thead className="border-b border-[#eadfd7] text-[11px] uppercase tracking-[0.12em] text-[#a18f84]">
+            <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="pb-3">Product</th>
+                <th className="pb-3">Sweet Product</th>
                 <th className="pb-3 text-right">Quantity ({product.unit})</th>
-                <th className="pb-3 text-right">Rate</th>
+                <th className="pb-3 text-right">Rate per {product.unit}</th>
                 <th className="pb-3 text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-[#f2ece7]">
-                <td className="py-5 font-semibold">{product.name}</td>
-                <td className="py-5 text-right">{order.qty}</td>
-                <td className="py-5 text-right">{money(rate)}</td>
-                <td className="py-5 text-right font-semibold">{money(total)}</td>
+              <tr className="border-b border-slate-100">
+                <td className="py-4 font-semibold text-slate-900">{product.name}</td>
+                <td className="py-4 text-right font-medium text-slate-700">{order.qty} {product.unit}</td>
+                <td className="py-4 text-right text-slate-700">{money(rate)}</td>
+                <td className="py-4 text-right font-bold text-slate-900">{money(total)}</td>
               </tr>
             </tbody>
           </table>
+
+          {/* Total */}
           <div className="mt-8 flex justify-end">
-            <div className="w-full max-w-[260px] border-t-2 border-[#312d2a] pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">Grand Total</span>
-                <span className="font-serif text-2xl font-semibold text-[#e85d04]">{money(total)}</span>
+            <div className="w-full max-w-[260px] border-t-2 border-slate-900 pt-4">
+              <div className="flex items-center justify-between text-base font-bold text-slate-900">
+                <span>Grand Total:</span>
+                <span className="text-2xl text-amber-600">{money(total)}</span>
               </div>
             </div>
           </div>
-          <p className="mt-14 border-t border-[#eadfd7] pt-5 text-center text-xs text-[#a18f84]">
-            Thank you for choosing Dhuniya. We appreciate your order.
+
+          <p className="mt-12 border-t border-slate-200 pt-5 text-center text-xs text-slate-400">
+            Thank you for choosing Dhuniya Products. We take pride in authentic eastern sweets.
           </p>
         </article>
       </div>
@@ -380,7 +437,7 @@ function Invoice({ order, product, rate, onClose }: {
   );
 }
 
-// --- Products Page ---
+// --- Product Modal ---
 type ProductFormData = { name: string; unit: string; price: string; active: boolean };
 
 function ProductModal({
@@ -414,69 +471,72 @@ function ProductModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#eadfd7] px-6 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 bg-slate-50 rounded-t-2xl">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e85d04]">{initial ? "Edit" : "New"} Product</p>
-            <h3 className="mt-1 font-serif text-lg font-semibold">{initial ? "Update product details" : "Add to catalog"}</h3>
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">{initial ? "Edit" : "New"} Sweet</p>
+            <h3 className="mt-0.5 text-lg font-bold text-slate-900">{initial ? "Update Sweet Details" : "Add Sweet to Catalog"}</h3>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[#9d928a] hover:bg-[#fff4ed]"><X className="size-4" /></button>
+          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-200"><X className="size-4" /></button>
         </div>
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Product Name *</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Sweet Name *</label>
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Motichoor Ladoo"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.name ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
+              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all ${
+                errors.name ? "border-rose-400 bg-rose-50/30" : "border-slate-300"
+              }`}
             />
-            {errors.name && <p className="mt-1 text-xs text-[#b33a2b]">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-xs text-rose-600">{errors.name}</p>}
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Unit</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Unit of Measurement</label>
             <select
               value={form.unit}
               onChange={(e) => setForm({ ...form, unit: e.target.value })}
-              className="w-full rounded-xl border border-[#eadfd7] px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20"
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
             >
-              <option value="kg">kg</option>
-              <option value="g">g</option>
-              <option value="pcs">pcs</option>
-              <option value="box">box</option>
+              <option value="kg">kg (Kilogram)</option>
+              <option value="g">g (Gram)</option>
+              <option value="pcs">pcs (Pieces)</option>
+              <option value="box">box (Standard Box)</option>
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Selling Price (₹ per unit) *</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Selling Price (₹ per {form.unit}) *</label>
             <input
               type="number"
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
-              placeholder="e.g. 480"
-              min="0"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.price ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
+              placeholder="480"
+              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all ${
+                errors.price ? "border-rose-400 bg-rose-50/30" : "border-slate-300"
+              }`}
             />
-            {errors.price && <p className="mt-1 text-xs text-[#b33a2b]">{errors.price}</p>}
+            {errors.price && <p className="mt-1 text-xs text-rose-600">{errors.price}</p>}
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-[#eadfd7] px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div>
-              <p className="text-sm font-semibold">Active</p>
-              <p className="text-xs text-[#968d86]">Show in order dropdown</p>
+              <p className="text-sm font-bold text-slate-800">Active Status</p>
+              <p className="text-xs text-slate-500">Enable this sweet in new order dropdowns</p>
             </div>
             <button
               type="button"
               onClick={() => setForm({ ...form, active: !form.active })}
-              className={`relative h-6 w-11 rounded-full transition-colors ${form.active ? "bg-[#e85d04]" : "bg-[#d6cfc9]"}`}
+              className={`relative h-6 w-11 rounded-full transition-colors ${form.active ? "bg-amber-600" : "bg-slate-300"}`}
             >
               <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${form.active ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>
         </div>
-        <div className="flex gap-3 border-t border-[#eadfd7] px-6 py-4">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-[#eadfd7] py-2.5 text-sm font-semibold text-[#766e68] hover:bg-[#faf5f1]">Cancel</button>
-          <button onClick={submit} className="flex-1 rounded-xl bg-[#e85d04] py-2.5 text-sm font-semibold text-white hover:bg-[#c94f05]">
-            {initial ? "Update Product" : "Add Product"}
+        <div className="flex gap-3 border-t border-slate-200 px-6 py-4 bg-slate-50 rounded-b-2xl">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-700 hover:bg-white">Cancel</button>
+          <button onClick={submit} className="flex-1 rounded-xl bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 shadow-xs">
+            {initial ? "Update Sweet" : "Add Sweet"}
           </button>
         </div>
       </div>
@@ -484,6 +544,7 @@ function ProductModal({
   );
 }
 
+// --- Products Page ---
 function ProductsPage({
   products,
   orders,
@@ -511,41 +572,43 @@ function ProductsPage({
         action={
           <Button
             onClick={() => setShowModal(true)}
-            className="bg-[#e85d04] text-white hover:bg-[#c94f05] gap-1.5"
+            className="bg-amber-600 text-white hover:bg-amber-700 gap-1.5 shadow-sm"
           >
-            <Plus className="size-4" /> New Product
+            <Plus className="size-4" /> New Sweet Product
           </Button>
         }
       />
-      <div className="mx-auto max-w-[1250px] px-5 py-9 sm:px-8 lg:px-10">
-        <p className="text-sm font-medium text-[#e85d04]">Sweet catalog</p>
-        <h2 className="mt-2 font-serif text-[32px] font-semibold">Products</h2>
-        <p className="mt-1 text-sm text-[#968d86]">Manage sweet catalog, view active order demand, and handover schedules.</p>
+      <div className="mx-auto max-w-[1250px] px-5 py-8 sm:px-8 lg:px-10">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Sweet Catalog</span>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Products & Production Demand</h2>
+          <p className="mt-1 text-sm text-slate-500">Manage sweet catalog, standard rates, and live customer orders in production.</p>
+        </div>
 
         {products.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#eadfd7] bg-white py-20 text-center">
-            <PackagePlus className="size-10 text-[#e85d04]" />
-            <p className="mt-4 font-serif text-xl font-semibold">No products yet</p>
-            <p className="mt-2 text-sm text-[#968d86]">Add your first sweet to get started.</p>
-            <button onClick={() => setShowModal(true)} className="mt-6 rounded-xl bg-[#e85d04] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#c94f05]">
-              Add Product
+          <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
+            <PackagePlus className="size-12 text-amber-600" />
+            <p className="mt-4 text-lg font-bold text-slate-800">No sweet products in catalog</p>
+            <p className="mt-1 text-sm text-slate-500">Add your first sweet to start taking orders.</p>
+            <button onClick={() => setShowModal(true)} className="mt-5 rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 shadow-sm">
+              Add Sweet Product
             </button>
           </div>
         ) : (
-          <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
+          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="border-b border-[#eee5df] bg-[#fffaf6] text-[11px] uppercase tracking-[0.12em] text-[#a18f84]">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-5 py-4">Product</th>
-                    <th className="px-5 py-4">Unit</th>
-                    <th className="px-5 py-4">Selling Price</th>
-                    <th className="px-5 py-4">Active Demand & Handover</th>
-                    <th className="px-5 py-4">Status</th>
-                    <th className="px-5 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4">Sweet Product</th>
+                    <th className="px-6 py-4">Unit</th>
+                    <th className="px-6 py-4">Standard Rate</th>
+                    <th className="px-6 py-4">Active Production Demand</th>
+                    <th className="px-6 py-4">Catalog Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {products.map((p) => {
                     const activeOrders = orders.filter(
                       (o) => o.productId === p.id && !["Completed", "Cancelled"].includes(o.status)
@@ -553,56 +616,58 @@ function ProductsPage({
                     const totalOrderedKg = activeOrders.reduce((sum, o) => sum + o.qty, 0);
 
                     return (
-                      <tr key={p.id} className="border-b border-[#f2ece7] last:border-0 hover:bg-[#fffaf6] transition-colors">
-                        <td className="px-5 py-4">
+                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 font-bold text-xs">
                               {p.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                             </div>
-                            <span className="font-semibold">{p.name}</span>
+                            <span className="font-bold text-slate-900">{p.name}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-[#766e68]">{p.unit}</td>
-                        <td className="px-5 py-4 font-serif font-semibold">
+                        <td className="px-6 py-4 font-medium text-slate-600">{p.unit}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900">
                           {money(p.price)}
-                          <span className="ml-1 text-xs font-sans font-normal text-[#a79a91]">/ {p.unit}</span>
+                          <span className="ml-1 text-xs font-normal text-slate-400">/ {p.unit}</span>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-6 py-4">
                           {activeOrders.length > 0 ? (
                             <div>
-                              <p className="font-semibold text-[#312d2a]">
+                              <p className="font-bold text-slate-900">
                                 {totalOrderedKg.toFixed(2)} {p.unit}
                               </p>
                               <button
                                 onClick={() => onViewProductOrders(p.id)}
-                                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#e85d04] hover:underline"
+                                className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline"
                               >
                                 {activeOrders.length} order{activeOrders.length !== 1 ? "s" : ""} · See who ordered & handover →
                               </button>
                             </div>
                           ) : (
-                            <span className="text-xs text-[#a59a92]">No active orders</span>
+                            <span className="text-xs text-slate-400">No active orders</span>
                           )}
                         </td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${p.active ? "bg-[#eaf7ef] text-[#29804a]" : "bg-[#f4f0ed] text-[#756a62]"}`}>
-                            <span className={`size-1.5 rounded-full ${p.active ? "bg-[#29804a]" : "bg-[#b4a89e]"}`} />
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border ${
+                            p.active ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"
+                          }`}>
+                            <span className={`size-1.5 rounded-full ${p.active ? "bg-emerald-500" : "bg-slate-400"}`} />
                             {p.active ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setEditProduct(p)}
-                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fff0e6] hover:text-[#e85d04] hover:border-[#e85d04] transition-colors"
-                              title="Edit product"
+                              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                              title="Edit sweet"
                             >
                               <Edit2 className="size-3.5" />
                             </button>
                             <button
                               onClick={() => setDeleteId(p.id)}
-                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fbe9e7] hover:text-[#b33a2b] hover:border-[#b33a2b] transition-colors"
-                              title="Delete product"
+                              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
+                              title="Delete sweet"
                             >
                               <Trash2 className="size-3.5" />
                             </button>
@@ -630,8 +695,8 @@ function ProductsPage({
       )}
       {deleteId !== null && (
         <ConfirmDialog
-          title="Delete product?"
-          message="This product will be removed. Orders linked to it will keep their data."
+          title="Delete Sweet Product?"
+          message="This product will be removed from your catalog. Previous orders will remain intact."
           onConfirm={() => { onDelete(deleteId); setDeleteId(null); }}
           onCancel={() => setDeleteId(null)}
         />
@@ -666,7 +731,7 @@ function OrderModal({
     customer: initial?.customer ?? "",
     productId: initial?.productId?.toString() ?? (activeProducts[0]?.id?.toString() ?? ""),
     qty: initial?.qty?.toString() ?? "",
-    deliveryDate: initial?.deliveryDate ?? "2026-10-30",
+    deliveryDate: initial?.deliveryDate ?? getTodayStr(),
     rate: initial?.rate?.toString() ?? "",
     notes: initial?.notes ?? "",
   });
@@ -674,10 +739,10 @@ function OrderModal({
 
   const validate = () => {
     const e: Partial<OrderFormData> = {};
-    if (!form.customer.trim()) e.customer = "Customer name required";
-    if (!form.productId) e.productId = "Select a product";
-    if (!form.qty || isNaN(Number(form.qty)) || Number(form.qty) <= 0) e.qty = "Valid quantity required";
-    if (!form.deliveryDate) e.deliveryDate = "Delivery date required";
+    if (!form.customer.trim()) e.customer = "Customer name is required";
+    if (!form.productId) e.productId = "Please select a sweet product";
+    if (!form.qty || isNaN(Number(form.qty)) || Number(form.qty) <= 0) e.qty = "Valid quantity is required";
+    if (!form.deliveryDate) e.deliveryDate = "Delivery / handover date required";
     return e;
   };
 
@@ -690,99 +755,110 @@ function OrderModal({
   const selectedProduct = products.find((p) => p.id === Number(form.productId));
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm p-4">
-      <div className="mx-auto my-6 w-full max-w-lg rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#eadfd7] px-6 py-5">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-xs p-4 flex items-center justify-center">
+      <div className="my-6 w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 bg-slate-50">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e85d04]">{initial ? "Edit" : "New"} Order</p>
-            <h3 className="mt-1 font-serif text-lg font-semibold">{initial ? "Update order details" : "Create a new order"}</h3>
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-600">{initial ? "Edit" : "New"} Order</p>
+            <h3 className="mt-0.5 text-lg font-bold text-slate-900">{initial ? "Update Customer Order" : "Place New Customer Order"}</h3>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[#9d928a] hover:bg-[#fff4ed]"><X className="size-4" /></button>
+          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-200"><X className="size-4" /></button>
         </div>
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Customer Name *</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Customer Name *</label>
             <input
               value={form.customer}
               onChange={(e) => setForm({ ...form, customer: e.target.value })}
-              placeholder="e.g. Sharma Sweets"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.customer ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
+              placeholder="e.g. Sharma Sweets, Grand Banquets"
+              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all ${
+                errors.customer ? "border-rose-400 bg-rose-50/30" : "border-slate-300"
+              }`}
             />
-            {errors.customer && <p className="mt-1 text-xs text-[#b33a2b]">{errors.customer}</p>}
+            {errors.customer && <p className="mt-1 text-xs text-rose-600">{errors.customer}</p>}
           </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Product *</label>
-            <select
-              value={form.productId}
-              onChange={(e) => { setForm({ ...form, productId: e.target.value, rate: "" }); }}
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.productId ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
-            >
-              <option value="">Select a product…</option>
-              {activeProducts.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} — {money(p.price)}/{p.unit}</option>
-              ))}
-            </select>
-            {errors.productId && <p className="mt-1 text-xs text-[#b33a2b]">{errors.productId}</p>}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Quantity ({selectedProduct?.unit ?? "kg"}) *</label>
-              <input
-                type="number"
-                value={form.qty}
-                onChange={(e) => setForm({ ...form, qty: e.target.value })}
-                placeholder="e.g. 5"
-                min="0"
-                step="0.25"
-                className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.qty ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
-              />
-              {errors.qty && <p className="mt-1 text-xs text-[#b33a2b]">{errors.qty}</p>}
+              <label className="mb-1.5 block text-xs font-bold text-slate-700">Sweet Product *</label>
+              <select
+                value={form.productId}
+                onChange={(e) => setForm({ ...form, productId: e.target.value })}
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
+              >
+                {activeProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({money(p.price)}/{p.unit})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Rate/kg (optional)</label>
+              <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                Quantity ({selectedProduct?.unit ?? "kg"}) *
+              </label>
+              <input
+                type="number"
+                step="0.25"
+                value={form.qty}
+                onChange={(e) => setForm({ ...form, qty: e.target.value })}
+                placeholder="e.g. 10"
+                className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all ${
+                  errors.qty ? "border-rose-400 bg-rose-50/30" : "border-slate-300"
+                }`}
+              />
+              {errors.qty && <p className="mt-1 text-xs text-rose-600">{errors.qty}</p>}
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-700">Handover / Delivery Date *</label>
+              <input
+                type="date"
+                value={form.deliveryDate}
+                onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })}
+                className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all ${
+                  errors.deliveryDate ? "border-rose-400 bg-rose-50/30" : "border-slate-300"
+                }`}
+              />
+              {errors.deliveryDate && <p className="mt-1 text-xs text-rose-600">{errors.deliveryDate}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-700">Custom Rate (optional)</label>
               <input
                 type="number"
                 value={form.rate}
                 onChange={(e) => setForm({ ...form, rate: e.target.value })}
-                placeholder={selectedProduct ? `Default: ${selectedProduct.price}` : "Auto from product"}
-                min="0"
-                className="w-full rounded-xl border border-[#eadfd7] px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20"
+                placeholder={`Default: ₹${selectedProduct?.price ?? 0}`}
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
               />
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Delivery Date *</label>
-            <input
-              type="date"
-              value={form.deliveryDate}
-              onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })}
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 ${errors.deliveryDate ? "border-[#b33a2b]" : "border-[#eadfd7]"}`}
-            />
-            {errors.deliveryDate && <p className="mt-1 text-xs text-[#b33a2b]">{errors.deliveryDate}</p>}
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[#4f463f]">Notes (optional)</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Special Notes (optional)</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="e.g. Extra saffron, gift boxes…"
+              placeholder="e.g. Extra saffron, wedding gift boxes, morning handover…"
               rows={2}
-              className="w-full rounded-xl border border-[#eadfd7] px-3 py-2.5 text-sm outline-none focus:border-[#e85d04] focus:ring-2 focus:ring-[#e85d04]/20 resize-none"
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 resize-none"
             />
           </div>
           {form.productId && form.qty && (
-            <div className="rounded-xl bg-[#fff7f1] px-4 py-3">
-              <p className="text-xs font-semibold text-[#e85d04]">Estimated total</p>
-              <p className="mt-1 font-serif text-xl font-semibold">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-800">Estimated Total Amount</p>
+                <p className="text-xs text-amber-700">Based on {form.qty} {selectedProduct?.unit ?? "kg"}</p>
+              </div>
+              <p className="text-2xl font-bold text-amber-900">
                 {money((Number(form.rate) || selectedProduct?.price || 0) * Number(form.qty))}
               </p>
             </div>
           )}
         </div>
-        <div className="flex gap-3 border-t border-[#eadfd7] px-6 py-4">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-[#eadfd7] py-2.5 text-sm font-semibold text-[#766e68] hover:bg-[#faf5f1]">Cancel</button>
-          <button onClick={submit} className="flex-1 rounded-xl bg-[#e85d04] py-2.5 text-sm font-semibold text-white hover:bg-[#c94f05]">
-            {initial ? "Update Order" : "Create Order"}
+        <div className="flex gap-3 border-t border-slate-200 px-6 py-4 bg-slate-50">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-700 hover:bg-white">Cancel</button>
+          <button onClick={submit} className="flex-1 rounded-xl bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 shadow-xs">
+            {initial ? "Update Order" : "Place Order"}
           </button>
         </div>
       </div>
@@ -859,41 +935,43 @@ function OrdersPage({
         title="Orders"
         onMenu={() => {}}
         action={
-          <Button onClick={() => setShowModal(true)} className="bg-[#e85d04] text-white hover:bg-[#c94f05] gap-1.5">
+          <Button onClick={() => setShowModal(true)} className="bg-amber-600 text-white hover:bg-amber-700 gap-1.5 shadow-sm">
             <Plus className="size-4" /> New Order
           </Button>
         }
       />
-      <div className="mx-auto max-w-[1250px] px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
-        <p className="text-sm font-medium text-[#e85d04]">Order management</p>
-        <h2 className="mt-2 font-serif text-[32px] font-semibold">All orders</h2>
-        <p className="mt-1 text-sm text-[#968d86]">Track customer orders, check handover deadlines, and update status.</p>
+      <div className="mx-auto max-w-[1250px] px-5 py-8 sm:px-8 lg:px-10">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Order Management</span>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Customer Orders & Dispatch</h2>
+          <p className="mt-1 text-sm text-slate-500">Track who placed each order, handover deadlines, and status.</p>
+        </div>
 
         {/* Highlighted Banner when filtered by Product */}
         {activeFilteredProduct && (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-[#e85d04] bg-[#fff8f3] p-5 shadow-sm">
-            <div className="flex items-center gap-3.5">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-[#e85d04] text-white shadow-sm">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-amber-500 bg-gradient-to-r from-amber-50 via-amber-50/60 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-amber-600 text-white shadow-md shadow-amber-600/20">
                 <Package className="size-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#e85d04]">Filtered by sweet</span>
-                  <span className="rounded-full bg-[#fae8dc] px-2.5 py-0.5 text-[11px] font-semibold text-[#8a4a1f]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Filtered by Sweet Product</span>
+                  <span className="rounded-full bg-amber-200/70 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
                     {filtered.length} customer order{filtered.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <h3 className="font-serif text-2xl font-bold text-[#312d2a]">{activeFilteredProduct.name}</h3>
-                <p className="mt-0.5 text-xs text-[#766e68]">
-                  Showing everyone who ordered {activeFilteredProduct.name} and their exact handover delivery dates.
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">{activeFilteredProduct.name}</h3>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  Showing everyone who ordered {activeFilteredProduct.name} and when you need to hand over.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-5">
               <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#968d86]">Total to Produce</p>
-                <p className="font-serif text-2xl font-bold text-[#e85d04]">
-                  {totalFilteredKg.toFixed(2)} <span className="text-sm font-normal text-[#766e68]">{activeFilteredProduct.unit}</span>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Demand to Produce</p>
+                <p className="text-2xl sm:text-3xl font-bold text-amber-600">
+                  {totalFilteredKg.toFixed(2)} <span className="text-sm font-normal text-slate-600">{activeFilteredProduct.unit}</span>
                 </p>
               </div>
               <button
@@ -901,7 +979,7 @@ function OrdersPage({
                   setFilterProductId("All");
                   onClearProductFilter?.();
                 }}
-                className="flex items-center gap-1.5 rounded-xl border border-[#eadfd7] bg-white px-3.5 py-2 text-xs font-semibold text-[#766e68] hover:bg-[#faf5f1] hover:text-[#312d2a] transition-colors shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
               >
                 <X className="size-3.5" /> Show All Sweets
               </button>
@@ -910,14 +988,14 @@ function OrdersPage({
         )}
 
         {/* Filters */}
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#eadfd7] bg-white p-4">
-          <label className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-[#eee5df] px-3">
-            <Search className="size-4 shrink-0 text-[#b4a79f]" />
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/50 px-3">
+            <Search className="size-4 shrink-0 text-slate-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search customer, order ID, notes…"
-              className="w-full bg-transparent py-2 text-sm outline-none"
+              className="w-full bg-transparent py-2 text-sm text-slate-900 outline-none"
             />
           </label>
           <select
@@ -926,9 +1004,9 @@ function OrdersPage({
               setFilterProductId(e.target.value);
               if (e.target.value === "All") onClearProductFilter?.();
             }}
-            className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm font-medium outline-none focus:border-[#e85d04]"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-amber-600"
           >
-            <option value="All">All Sweets ({products.length})</option>
+            <option value="All">All Sweet Products ({products.length})</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -938,9 +1016,9 @@ function OrdersPage({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm outline-none focus:border-[#e85d04]"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 outline-none focus:border-amber-600"
           >
-            <option value="All">All statuses</option>
+            <option value="All">All Statuses</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s}>{s}</option>
             ))}
@@ -949,7 +1027,7 @@ function OrdersPage({
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm outline-none focus:border-[#e85d04]"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-amber-600"
             title="Filter by delivery or order date"
           />
           {(query || filterProductId !== "All" || filterStatus !== "All" || filterDate) && (
@@ -961,41 +1039,41 @@ function OrdersPage({
                 setFilterDate("");
                 onClearProductFilter?.();
               }}
-              className="rounded-xl border border-[#eadfd7] px-3 py-2 text-sm font-medium text-[#766e68] hover:bg-[#faf5f1]"
+              className="rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             >
-              Clear all
+              Clear filters
             </button>
           )}
-          <span className="ml-auto text-xs font-semibold text-[#a18f84]">
+          <span className="ml-auto text-xs font-bold text-slate-400">
             {filtered.length} order{filtered.length !== 1 ? "s" : ""}
           </span>
         </div>
 
         {/* Orders Table */}
         {filtered.length === 0 ? (
-          <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#eadfd7] bg-white py-20 text-center">
-            <ClipboardList className="size-10 text-[#e85d04]" />
-            <p className="mt-4 font-serif text-xl font-semibold">No orders found</p>
-            <p className="mt-2 text-sm text-[#968d86]">
-              {orders.length === 0 ? "Create your first order to get started." : "Try adjusting your search or filters."}
+          <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
+            <ClipboardList className="size-12 text-amber-600" />
+            <p className="mt-4 text-lg font-bold text-slate-800">No orders match criteria</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {orders.length === 0 ? "Create your first order to get started." : "Try adjusting your search query or filters."}
             </p>
           </div>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
+          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[960px] text-left text-sm">
-                <thead className="border-b border-[#eee5df] bg-[#fffaf6] text-[11px] uppercase tracking-[0.12em] text-[#a18f84]">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-5 py-4">Customer (Who Ordered)</th>
-                    <th className="px-5 py-4">Sweet Product</th>
-                    <th className="px-5 py-4">Quantity</th>
-                    <th className="px-5 py-4">Handover / Delivery Date</th>
-                    <th className="px-5 py-4">Amount</th>
-                    <th className="px-5 py-4">Status</th>
-                    <th className="px-5 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4">Customer (Who Ordered)</th>
+                    <th className="px-6 py-4">Sweet Product</th>
+                    <th className="px-6 py-4">Quantity</th>
+                    <th className="px-6 py-4">Handover Schedule</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {filtered.map((order) => {
                     const prod = getProduct(order.productId);
                     const rate = order.rate ?? prod?.price ?? 0;
@@ -1003,20 +1081,20 @@ function OrdersPage({
                     const badge = getHandoverBadge(order.deliveryDate);
 
                     return (
-                      <tr key={order.id} className="border-b border-[#f2ece7] last:border-0 hover:bg-[#fffaf6] transition-colors">
-                        <td className="px-5 py-4">
+                      <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 font-bold text-xs">
                               {order.customer.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-[#312d2a]">{order.customer}</p>
-                              <div className="flex items-center gap-1.5 text-xs text-[#a59a92]">
-                                <span className="font-mono">{order.id}</span>
+                              <p className="font-bold text-slate-900">{order.customer}</p>
+                              <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                <span className="font-mono text-slate-500">{order.id}</span>
                                 {order.notes && (
                                   <>
                                     <span>·</span>
-                                    <span className="italic text-[#766e68] max-w-[180px] truncate" title={order.notes}>
+                                    <span className="italic text-slate-600 max-w-[200px] truncate" title={order.notes}>
                                       "{order.notes}"
                                     </span>
                                   </>
@@ -1025,19 +1103,19 @@ function OrdersPage({
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
-                          <p className="font-medium text-[#312d2a]">{prod?.name ?? "—"}</p>
-                          <p className="text-xs text-[#a59a92]">{money(rate)} / {prod?.unit ?? "kg"}</p>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-900">{prod?.name ?? "—"}</p>
+                          <p className="text-xs text-slate-400">{money(rate)} / {prod?.unit ?? "kg"}</p>
                         </td>
-                        <td className="px-5 py-4">
-                          <span className="font-serif text-base font-semibold text-[#e85d04]">{order.qty}</span>
-                          <span className="ml-1 text-xs text-[#766e68]">{prod?.unit ?? "kg"}</span>
+                        <td className="px-6 py-4">
+                          <span className="text-base font-bold text-amber-600">{order.qty}</span>
+                          <span className="ml-1 text-xs text-slate-500">{prod?.unit ?? "kg"}</span>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="size-3.5 text-[#e85d04]" />
-                              <span className="font-semibold text-sm text-[#312d2a]">{dateLabel(order.deliveryDate)}</span>
+                              <Calendar className="size-3.5 text-amber-600" />
+                              <span className="font-bold text-sm text-slate-900">{dateLabel(order.deliveryDate)}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               {badge && (
@@ -1045,34 +1123,34 @@ function OrdersPage({
                                   {badge.label}
                                 </span>
                               )}
-                              <span className="text-[11px] text-[#a59a92]">Placed: {dateLabel(order.date)}</span>
+                              <span className="text-[11px] text-slate-400">Placed: {dateLabel(order.date)}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4 font-serif font-semibold text-[#312d2a]">{money(total)}</td>
-                        <td className="px-5 py-4">
+                        <td className="px-6 py-4 font-bold text-slate-900">{money(total)}</td>
+                        <td className="px-6 py-4">
                           <StatusDropdown value={order.status} onChange={(v) => onStatusChange(order.id, v)} />
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => onGenerate(order)}
-                              className="border-[#f1d6c5] text-[#c65016] hover:bg-[#fff0e6]"
+                              className="border-amber-200 bg-amber-50/70 text-amber-800 hover:bg-amber-100 font-semibold"
                             >
                               <FileText className="size-3.5" data-icon="inline-start" /> Bill
                             </Button>
                             <button
                               onClick={() => setEditOrder(order)}
-                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fff0e6] hover:text-[#e85d04] hover:border-[#e85d04] transition-colors"
+                              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                               title="Edit order"
                             >
                               <Edit2 className="size-3.5" />
                             </button>
                             <button
                               onClick={() => setDeleteId(order.id)}
-                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fbe9e7] hover:text-[#b33a2b] hover:border-[#b33a2b] transition-colors"
+                              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
                               title="Delete order"
                             >
                               <Trash2 className="size-3.5" />
@@ -1102,7 +1180,7 @@ function OrdersPage({
       )}
       {deleteId !== null && (
         <ConfirmDialog
-          title="Delete order?"
+          title="Delete Customer Order?"
           message={`Order ${deleteId} will be permanently removed.`}
           onConfirm={() => { onDelete(deleteId); setDeleteId(null); }}
           onCancel={() => setDeleteId(null)}
@@ -1151,128 +1229,155 @@ function Dashboard({ orders, products, setActive, onViewProductOrders }: {
   return (
     <>
       <PageHeader title="Dashboard" onMenu={() => {}} />
-      <div className="mx-auto max-w-[1250px] px-5 py-9 sm:px-8 lg:px-10">
-        <div className="flex items-center gap-2 text-sm font-medium text-[#e85d04]">
-          <Factory className="size-4" /> Production overview
+      <div className="mx-auto max-w-[1250px] px-5 py-8 sm:px-8 lg:px-10">
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600">
+            <Factory className="size-4" /> Production Desk
+          </div>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Today&apos;s Sweet Production & Orders</h2>
+          <p className="mt-1 text-sm text-slate-500">Monitor daily production output, customer orders, and upcoming handovers.</p>
         </div>
-        <h2 className="mt-2 font-serif text-[36px] font-semibold">Today&apos;s sweet list</h2>
-        <p className="mt-1 text-sm text-[#968d86]">Keep every order moving smoothly.</p>
 
-        {/* Stats */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {[
-            { label: "Total kg (active orders)", value: totalKg.toFixed(2), suffix: "kg" },
-            { label: "Active products", value: activeProductCount.toString(), suffix: "items" },
-            { label: "Active orders", value: activeOrders.length.toString(), suffix: "orders" },
-          ].map(({ label, value, suffix }) => (
-            <div key={label} className="rounded-2xl border border-[#eadfd7] bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#a18e82]">{label}</p>
-              <div className="mt-4 flex items-end gap-2">
-                <span className="font-serif text-3xl font-semibold">{value}</span>
-                <span className="mb-1.5 text-sm text-[#a18f85]">{suffix}</span>
-              </div>
+        {/* Executive Stats Cards */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 border-l-4 border-l-amber-500 bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Production Demand</p>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">{totalKg.toFixed(2)}</span>
+              <span className="text-sm font-semibold text-slate-500">kg active</span>
             </div>
-          ))}
+            <p className="mt-2 text-xs text-slate-500">Across {activeOrders.length} customer orders in pipeline</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 border-l-4 border-l-blue-500 bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Sweet Products</p>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">{activeProductCount}</span>
+              <span className="text-sm font-semibold text-slate-500">catalog items</span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">{productBreakdown.length} sweets currently ordered</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 border-l-4 border-l-emerald-500 bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Orders in Kitchen</p>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">{activeOrders.length}</span>
+              <span className="text-sm font-semibold text-slate-500">orders</span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">{customers.length} unique customers waiting for sweets</p>
+          </div>
         </div>
 
-        {/* Product breakdown — clickable to show order details */}
+        {/* Product breakdown — Clickable drill-down */}
         {productBreakdown.length > 0 && (
           <div className="mt-8">
-            <h3 className="font-serif text-xl font-semibold">Production breakdown</h3>
-            <p className="mt-1 text-sm text-[#9c938c]">Click a product to see who ordered and delivery schedule.</p>
-            <div className="mt-4 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900">Production Breakdown by Sweet</h3>
+                <p className="text-sm text-slate-500">Click any sweet to see who ordered it and exact delivery deadlines.</p>
+              </div>
+              <span className="text-xs font-semibold text-amber-600">Click any sweet row below ↓</span>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               {productBreakdown.map(({ product, kg, count, orders: productOrders }) => {
                 const isExpanded = expandedProductId === product.id;
                 return (
-                  <div key={product.id} className="border-b border-[#f2ece7] last:border-0">
-                    {/* Clickable product row */}
+                  <div key={product.id} className="border-b border-slate-100 last:border-0">
+                    {/* Clickable sweet row */}
                     <button
                       onClick={() => setExpandedProductId(isExpanded ? null : product.id)}
-                      className={`flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-[#fffaf6] ${isExpanded ? "bg-[#fffaf6]" : ""}`}
+                      className={`flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50/80 ${
+                        isExpanded ? "bg-amber-50/30" : ""
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 font-bold text-xs">
                           {product.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                         </div>
                         <div>
-                          <p className="font-semibold">{product.name}</p>
-                          <p className="text-xs text-[#a59a92]">{count} order{count !== 1 ? "s" : ""} · Click to view details</p>
+                          <p className="font-bold text-slate-900">{product.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {count} customer order{count !== 1 ? "s" : ""} · {isExpanded ? "Hide breakdown" : "Click to view customers & schedule"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="font-serif text-xl font-semibold">{kg.toFixed(2)}</p>
-                          <p className="text-xs text-[#a59a92]">{product.unit}</p>
+                          <p className="text-xl font-bold text-slate-900">{kg.toFixed(2)}</p>
+                          <p className="text-xs font-medium text-slate-400">{product.unit}</p>
                         </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             onViewProductOrders(product.id);
                           }}
-                          className="rounded-lg border border-[#eadfd7] bg-white px-2.5 py-1 text-xs font-semibold text-[#e85d04] hover:bg-[#fff0e6] hover:border-[#e85d04] transition-colors shadow-xs"
-                          title="View customer orders and handover dates"
+                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-amber-600 hover:bg-amber-50 hover:border-amber-300 transition-colors shadow-xs"
+                          title="Open filtered Orders"
                         >
                           Orders →
                         </button>
-                        <ChevronRight className={`size-4 text-[#a18f84] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                        <ChevronRight className={`size-4 text-slate-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                       </div>
                     </button>
 
                     {/* Expanded order details */}
                     {isExpanded && (
-                      <div className="border-t border-[#f2ece7] bg-[#fefbf8]">
-                        {/* Column header */}
-                        <div className="grid grid-cols-[1fr_80px_130px_110px] gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a18f84] border-b border-[#f2ece7]">
+                      <div className="border-t border-slate-200 bg-slate-50/60">
+                        {/* Header */}
+                        <div className="grid grid-cols-[1fr_80px_130px_110px] gap-2 px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-100/60">
                           <span>Customer (Who Ordered)</span>
-                          <span className="text-right">Qty</span>
+                          <span className="text-right">Quantity</span>
                           <span className="text-right">Handover Date</span>
                           <span className="text-right">Status</span>
                         </div>
-                        {/* Order rows */}
-                        {productOrders.map((o) => {
-                          const badge = getHandoverBadge(o.deliveryDate);
-                          return (
-                            <div
-                              key={o.id}
-                              className="grid grid-cols-[1fr_80px_130px_110px] gap-2 items-center px-5 py-3 border-b border-[#f5f0ec] last:border-0 hover:bg-[#fff7f1] transition-colors"
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#fff0e6] text-[10px] font-bold text-[#c65016]">
-                                  {o.customer.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold truncate text-[#312d2a]">{o.customer}</p>
-                                  <p className="text-[11px] text-[#a59a92]">{o.id}{o.notes ? ` · "${o.notes}"` : ""}</p>
-                                </div>
-                              </div>
-                              <p className="text-sm font-semibold text-right text-[#e85d04]">{o.qty} {product.unit}</p>
-                              <div className="text-right">
-                                <div className="inline-flex items-center gap-1 text-sm justify-end">
-                                  <Calendar className="size-3 text-[#e85d04]" />
-                                  <span className="font-semibold text-[#312d2a]">{dateLabel(o.deliveryDate)}</span>
-                                </div>
-                                {badge && (
-                                  <div className="mt-0.5">
-                                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.2 text-[9px] font-bold ${badge.style}`}>
-                                      {badge.label}
-                                    </span>
+                        {/* Rows */}
+                        <div className="divide-y divide-slate-100">
+                          {productOrders.map((o) => {
+                            const badge = getHandoverBadge(o.deliveryDate);
+                            return (
+                              <div
+                                key={o.id}
+                                className="grid grid-cols-[1fr_80px_130px_110px] gap-2 items-center px-6 py-3 hover:bg-amber-50/40 transition-colors"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-800">
+                                    {o.customer.charAt(0).toUpperCase()}
                                   </div>
-                                )}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold truncate text-slate-900">{o.customer}</p>
+                                    <p className="text-[11px] text-slate-400 font-mono">{o.id}{o.notes ? ` · "${o.notes}"` : ""}</p>
+                                  </div>
+                                </div>
+                                <p className="text-sm font-bold text-right text-amber-600">{o.qty} {product.unit}</p>
+                                <div className="text-right">
+                                  <div className="inline-flex items-center gap-1 text-sm justify-end">
+                                    <Calendar className="size-3 text-amber-600" />
+                                    <span className="font-bold text-slate-800">{dateLabel(o.deliveryDate)}</span>
+                                  </div>
+                                  {badge && (
+                                    <div className="mt-0.5">
+                                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.2 text-[9px] font-bold ${badge.style}`}>
+                                        {badge.label}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <Badge status={o.status} />
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <Badge status={o.status} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {/* Footer with View in Orders action */}
-                        <div className="flex items-center justify-between border-t border-[#eadfd7] bg-[#fffaf6] px-5 py-3">
-                          <p className="text-xs text-[#968d86]">
-                            Total: <strong className="text-[#312d2a]">{kg.toFixed(2)} {product.unit}</strong> across {count} order{count !== 1 ? "s" : ""}
+                            );
+                          })}
+                        </div>
+                        {/* Footer with action */}
+                        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
+                          <p className="text-xs text-slate-600">
+                            Total for {product.name}: <strong className="text-slate-900 font-bold">{kg.toFixed(2)} {product.unit}</strong> across {count} customer order{count !== 1 ? "s" : ""}
                           </p>
                           <button
                             onClick={(e) => { e.stopPropagation(); onViewProductOrders(product.id); }}
-                            className="flex items-center gap-1.5 rounded-lg bg-[#e85d04] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#c94f05] transition-colors"
+                            className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition-colors shadow-xs"
                           >
                             View all in Orders <ArrowRight className="size-3" />
                           </button>
@@ -1286,49 +1391,53 @@ function Dashboard({ orders, products, setActive, onViewProductOrders }: {
           </div>
         )}
 
-        {/* Status summary */}
+        {/* Order Status Summary */}
         <div className="mt-8">
-          <h3 className="font-serif text-xl font-semibold">Order status summary</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {STATUS_OPTIONS.filter((s) => statusCounts[s] > 0).map((s) => {
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900">Order Pipeline Status</h3>
+          <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+            {STATUS_OPTIONS.map((s) => {
+              const count = statusCounts[s] ?? 0;
               const style = STATUS_STYLES[s];
               return (
-                <div key={s} className={`flex items-center justify-between rounded-xl px-4 py-3 ${style.bg}`}>
-                  <span className={`text-sm font-semibold ${style.text}`}>{s}</span>
-                  <span className={`font-serif text-xl font-semibold ${style.text}`}>{statusCounts[s]}</span>
+                <div key={s} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className={`size-2 rounded-full ${style.dot}`} />
+                    <span className="text-xl font-bold text-slate-900">{count}</span>
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-slate-600 truncate">{s}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Customer list */}
+        {/* Active Customers */}
         {customers.length > 0 && (
           <div className="mt-8">
             <button
               onClick={() => setExpandCustomers(!expandCustomers)}
-              className="flex w-full items-center justify-between"
+              className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs hover:bg-slate-50 transition-colors"
             >
               <div>
-                <h3 className="font-serif text-xl font-semibold">Active customers</h3>
-                <p className="mt-1 text-sm text-[#9c938c]">{customers.length} customer{customers.length !== 1 ? "s" : ""} with active orders</p>
+                <h3 className="text-base font-bold text-slate-900">Active Customer Orders ({customers.length})</h3>
+                <p className="text-xs text-slate-500">View customer list with active sweet requirements</p>
               </div>
-              <ChevronRight className={`size-5 text-[#a18f84] transition-transform ${expandCustomers ? "rotate-90" : ""}`} />
+              <ChevronRight className={`size-5 text-slate-400 transition-transform ${expandCustomers ? "rotate-90" : ""}`} />
             </button>
             {expandCustomers && (
-              <div className="mt-4 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm divide-y divide-slate-100">
                 {customers.map(([name, { orders: cnt, kg }]) => (
-                  <div key={name} className="flex items-center justify-between border-b border-[#f2ece7] px-5 py-4 last:border-0">
+                  <div key={name} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">
                         {name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold">{name}</p>
-                        <p className="text-xs text-[#a59a92]">{cnt} order{cnt !== 1 ? "s" : ""}</p>
+                        <p className="font-bold text-slate-900">{name}</p>
+                        <p className="text-xs text-slate-500">{cnt} order{cnt !== 1 ? "s" : ""}</p>
                       </div>
                     </div>
-                    <p className="font-serif font-semibold">{kg.toFixed(2)} kg</p>
+                    <p className="font-bold text-amber-600">{kg.toFixed(2)} kg</p>
                   </div>
                 ))}
               </div>
@@ -1336,46 +1445,50 @@ function Dashboard({ orders, products, setActive, onViewProductOrders }: {
           </div>
         )}
 
-        {/* Quick actions */}
-        <div className="mt-10 flex items-center justify-between">
-          <div>
-            <h3 className="font-serif text-xl font-semibold">Quick actions</h3>
-            <p className="mt-1 text-sm text-[#9c938c]">Jump into the work that needs attention.</p>
+        {/* Quick Actions */}
+        <div className="mt-10">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-slate-900">Quick Navigation</h3>
+            <button onClick={() => setActive("Orders")} className="text-xs font-bold text-amber-600 hover:text-amber-700">
+              Go to Orders →
+            </button>
           </div>
-          <button onClick={() => setActive("Orders")} className="text-xs font-semibold text-[#e85d04]">
-            View all orders →
-          </button>
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <button
-            onClick={() => setActive("Orders")}
-            className="group rounded-2xl border border-[#eadfd7] bg-white p-5 text-left hover:border-[#e85d04] transition-colors"
-          >
-            <ClipboardList className="size-5 text-[#e85d04]" />
-            <p className="mt-4 font-semibold">Manage orders</p>
-            <p className="mt-1 text-sm text-[#968d86]">Review customer requests, update status, and generate bills.</p>
-            <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-[#e85d04] opacity-0 group-hover:opacity-100 transition-opacity">
-              Open Orders <ChevronRight className="size-3" />
-            </div>
-          </button>
-          <button
-            onClick={() => setActive("Products")}
-            className="group rounded-2xl border border-[#eadfd7] bg-white p-5 text-left hover:border-[#e85d04] transition-colors"
-          >
-            <Package className="size-5 text-[#e85d04]" />
-            <p className="mt-4 font-semibold">Manage products</p>
-            <p className="mt-1 text-sm text-[#968d86]">Add, edit, and manage your sweet catalog and pricing.</p>
-            <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-[#e85d04] opacity-0 group-hover:opacity-100 transition-opacity">
-              Open Products <ChevronRight className="size-3" />
-            </div>
-          </button>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <button
+              onClick={() => setActive("Orders")}
+              className="group rounded-2xl border border-slate-200 bg-white p-5 text-left hover:border-amber-500 hover:shadow-sm transition-all"
+            >
+              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <ClipboardList className="size-5" />
+              </div>
+              <p className="mt-3 font-bold text-slate-900">Manage Customer Orders</p>
+              <p className="mt-1 text-xs text-slate-500">Track delivery deadlines, customer orders, and print bills.</p>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                Open Orders Page <ChevronRight className="size-3" />
+              </div>
+            </button>
+
+            <button
+              onClick={() => setActive("Products")}
+              className="group rounded-2xl border border-slate-200 bg-white p-5 text-left hover:border-amber-500 hover:shadow-sm transition-all"
+            >
+              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <Package className="size-5" />
+              </div>
+              <p className="mt-3 font-bold text-slate-900">Manage Sweet Catalog</p>
+              <p className="mt-1 text-xs text-slate-500">Update sweets, pricing per kg, and catalog availability.</p>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                Open Sweet Products <ChevronRight className="size-3" />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </>
   );
 }
 
-// --- Root ---
+// --- Root Component ---
 export default function Home() {
   const [active, setActive] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1385,7 +1498,7 @@ export default function Home() {
   const [nextProductId, setNextProductId] = useState(4);
   const [initialProductFilter, setInitialProductFilter] = useState<number | null>(null);
 
-  // Navigate to Orders filtered by a specific product (from Dashboard)
+  // Navigate to Orders filtered by a specific sweet
   const viewProductOrders = (productId: number) => {
     setInitialProductFilter(productId);
     setActive("Orders");
@@ -1453,7 +1566,7 @@ export default function Home() {
   const invoiceRate = invoiceOrder ? (invoiceOrder.rate ?? invoiceProduct?.price ?? 0) : 0;
 
   return (
-    <div className="min-h-screen bg-[#fffaf6] text-[#312d2a]">
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased font-sans">
       <Sidebar
         active={active}
         setActive={setActive}
@@ -1461,7 +1574,7 @@ export default function Home() {
         setOpen={setSidebarOpen}
         orderCount={orders.filter((o) => !["Completed", "Cancelled"].includes(o.status)).length}
       />
-      <main className="min-h-screen lg:ml-[258px]">
+      <main className="min-h-screen lg:ml-[260px] pb-16">
         {active === "Dashboard" && (
           <Dashboard orders={orders} products={products} setActive={setActive} onViewProductOrders={viewProductOrders} />
         )}
