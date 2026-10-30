@@ -89,7 +89,7 @@ const ORDERS_SEED: Order[] = [
 
 // --- Helpers ---
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const money = (v: number) => `₹${v.toLocaleString("en-IN")}`;
+const money = (v: number) => `Rs. ${v.toLocaleString("en-LK")}`;
 const dateLabel = (v: string) => {
   if (!v) return "";
   const parts = v.split("-");
@@ -177,7 +177,7 @@ function PageHeader({ title, onMenu, action }: { title: string; onMenu?: () => v
     try {
       const now = new Date();
       setHeaderDate(
-        new Intl.DateTimeFormat("en-IN", {
+        new Intl.DateTimeFormat("en-LK", {
           weekday: "short",
           day: "numeric",
           month: "short",
@@ -518,7 +518,7 @@ function ProductModal({
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-bold text-slate-700">Selling Price (₹ per {form.unit}) *</label>
+            <label className="mb-1.5 block text-xs font-bold text-slate-700">Selling Price (Rs. per {form.unit}) *</label>
             <input
               type="number"
               value={form.price}
@@ -916,7 +916,7 @@ function OrderModal({
                 type="number"
                 value={form.rate}
                 onChange={(e) => setForm({ ...form, rate: e.target.value })}
-                placeholder={`Default: ₹${selectedProduct?.price ?? 0}`}
+                placeholder={`Default: Rs. ${selectedProduct?.price ?? 0}`}
                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20"
               />
             </div>
