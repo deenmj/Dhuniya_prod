@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
+  ArrowRight,
   Bell,
+  Calendar,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -19,6 +21,7 @@ import {
   Search,
   Sparkles,
   Trash2,
+  User,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -113,6 +116,29 @@ const getTodayStr = () => {
 
 let nextOrderNum = 1049;
 const genOrderId = () => `ORD-${nextOrderNum++}`;
+
+const getHandoverBadge = (deliveryDateStr: string) => {
+  if (!deliveryDateStr) return null;
+  const today = getTodayStr();
+  if (deliveryDateStr === today) {
+    return { label: "Handover Today", style: "bg-[#fbe9e7] text-[#b33a2b] border-[#f4c7c3]" };
+  }
+  try {
+    const todayDate = new Date(today);
+    const delDate = new Date(deliveryDateStr);
+    const diffTime = delDate.getTime() - todayDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+
+    if (diffDays === 1) {
+      return { label: "Tomorrow", style: "bg-[#fff7d7] text-[#946200] border-[#fae498]" };
+    } else if (diffDays < 0) {
+      return { label: `${Math.abs(diffDays)}d Overdue`, style: "bg-[#fbe9e7] text-[#b33a2b] border-[#f4c7c3]" };
+    } else if (diffDays <= 3) {
+      return { label: `In ${diffDays} days`, style: "bg-[#e8f0fe] text-[#1a56bb] border-[#c2d7fc]" };
+    }
+  } catch {}
+  return null;
+};
 
 // --- Shared UI ---
 function Badge({ status }: { status: string }) {
@@ -458,11 +484,20 @@ function ProductModal({
   );
 }
 
-function ProductsPage({ products, onAdd, onEdit, onDelete }: {
+function ProductsPage({
+  products,
+  orders,
+  onAdd,
+  onEdit,
+  onDelete,
+  onViewProductOrders,
+}: {
   products: Product[];
+  orders: Order[];
   onAdd: (data: ProductFormData) => void;
   onEdit: (id: number, data: ProductFormData) => void;
   onDelete: (id: number) => void;
+  onViewProductOrders: (productId: number) => void;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -485,7 +520,7 @@ function ProductsPage({ products, onAdd, onEdit, onDelete }: {
       <div className="mx-auto max-w-[1250px] px-5 py-9 sm:px-8 lg:px-10">
         <p className="text-sm font-medium text-[#e85d04]">Sweet catalog</p>
         <h2 className="mt-2 font-serif text-[32px] font-semibold">Products</h2>
-        <p className="mt-1 text-sm text-[#968d86]">Manage your sweet catalog, pricing, and availability.</p>
+        <p className="mt-1 text-sm text-[#968d86]">Manage sweet catalog, view active order demand, and handover schedules.</p>
 
         {products.length === 0 ? (
           <div className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#eadfd7] bg-white py-20 text-center">
@@ -499,55 +534,83 @@ function ProductsPage({ products, onAdd, onEdit, onDelete }: {
         ) : (
           <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="border-b border-[#eee5df] bg-[#fffaf6] text-[11px] uppercase tracking-[0.12em] text-[#a18f84]">
                   <tr>
                     <th className="px-5 py-4">Product</th>
                     <th className="px-5 py-4">Unit</th>
                     <th className="px-5 py-4">Selling Price</th>
+                    <th className="px-5 py-4">Active Demand & Handover</th>
                     <th className="px-5 py-4">Status</th>
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p) => (
-                    <tr key={p.id} className="border-b border-[#f2ece7] last:border-0 hover:bg-[#fffaf6] transition-colors">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
-                            {p.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                  {products.map((p) => {
+                    const activeOrders = orders.filter(
+                      (o) => o.productId === p.id && !["Completed", "Cancelled"].includes(o.status)
+                    );
+                    const totalOrderedKg = activeOrders.reduce((sum, o) => sum + o.qty, 0);
+
+                    return (
+                      <tr key={p.id} className="border-b border-[#f2ece7] last:border-0 hover:bg-[#fffaf6] transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                              {p.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                            </div>
+                            <span className="font-semibold">{p.name}</span>
                           </div>
-                          <span className="font-semibold">{p.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-[#766e68]">{p.unit}</td>
-                      <td className="px-5 py-4 font-serif font-semibold">{money(p.price)}<span className="ml-1 text-xs font-sans font-normal text-[#a79a91]">/ {p.unit}</span></td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${p.active ? "bg-[#eaf7ef] text-[#29804a]" : "bg-[#f4f0ed] text-[#756a62]"}`}>
-                          <span className={`size-1.5 rounded-full ${p.active ? "bg-[#29804a]" : "bg-[#b4a89e]"}`} />
-                          {p.active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setEditProduct(p)}
-                            className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fff0e6] hover:text-[#e85d04] hover:border-[#e85d04] transition-colors"
-                            title="Edit product"
-                          >
-                            <Edit2 className="size-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(p.id)}
-                            className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fbe9e7] hover:text-[#b33a2b] hover:border-[#b33a2b] transition-colors"
-                            title="Delete product"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-5 py-4 text-[#766e68]">{p.unit}</td>
+                        <td className="px-5 py-4 font-serif font-semibold">
+                          {money(p.price)}
+                          <span className="ml-1 text-xs font-sans font-normal text-[#a79a91]">/ {p.unit}</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          {activeOrders.length > 0 ? (
+                            <div>
+                              <p className="font-semibold text-[#312d2a]">
+                                {totalOrderedKg.toFixed(2)} {p.unit}
+                              </p>
+                              <button
+                                onClick={() => onViewProductOrders(p.id)}
+                                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#e85d04] hover:underline"
+                              >
+                                {activeOrders.length} order{activeOrders.length !== 1 ? "s" : ""} · See who ordered & handover →
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-[#a59a92]">No active orders</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${p.active ? "bg-[#eaf7ef] text-[#29804a]" : "bg-[#f4f0ed] text-[#756a62]"}`}>
+                            <span className={`size-1.5 rounded-full ${p.active ? "bg-[#29804a]" : "bg-[#b4a89e]"}`} />
+                            {p.active ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditProduct(p)}
+                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fff0e6] hover:text-[#e85d04] hover:border-[#e85d04] transition-colors"
+                              title="Edit product"
+                            >
+                              <Edit2 className="size-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(p.id)}
+                              className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fbe9e7] hover:text-[#b33a2b] hover:border-[#b33a2b] transition-colors"
+                              title="Delete product"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -728,7 +791,17 @@ function OrderModal({
 }
 
 // --- Orders Page ---
-function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange, onGenerate }: {
+function OrdersPage({
+  orders,
+  products,
+  onAdd,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  onGenerate,
+  initialProductFilter = null,
+  onClearProductFilter,
+}: {
   orders: Order[];
   products: Product[];
   onAdd: (data: OrderFormData) => void;
@@ -736,25 +809,47 @@ function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange,
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
   onGenerate: (order: Order) => void;
+  initialProductFilter?: number | null;
+  onClearProductFilter?: () => void;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [editOrder, setEditOrder] = useState<Order | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [filterProductId, setFilterProductId] = useState<string>(
+    initialProductFilter ? String(initialProductFilter) : "All"
+  );
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterDate, setFilterDate] = useState("");
 
+  useEffect(() => {
+    if (initialProductFilter !== null && initialProductFilter !== undefined) {
+      setFilterProductId(String(initialProductFilter));
+    }
+  }, [initialProductFilter]);
+
+  const activeFilteredProduct = useMemo(
+    () => (filterProductId !== "All" ? products.find((p) => p.id === Number(filterProductId)) : null),
+    [filterProductId, products]
+  );
+
   const filtered = useMemo(() => {
     return orders.filter((o) => {
+      const matchProduct = filterProductId === "All" || o.productId === Number(filterProductId);
       const matchQuery =
         o.customer.toLowerCase().includes(query.toLowerCase()) ||
         o.id.toLowerCase().includes(query.toLowerCase()) ||
+        (o.notes && o.notes.toLowerCase().includes(query.toLowerCase())) ||
         (products.find((p) => p.id === o.productId)?.name ?? "").toLowerCase().includes(query.toLowerCase());
       const matchStatus = filterStatus === "All" || o.status === filterStatus;
       const matchDate = !filterDate || o.date === filterDate || o.deliveryDate === filterDate;
-      return matchQuery && matchStatus && matchDate;
+      return matchProduct && matchQuery && matchStatus && matchDate;
     });
-  }, [orders, products, query, filterStatus, filterDate]);
+  }, [orders, products, filterProductId, query, filterStatus, filterDate]);
+
+  const totalFilteredKg = useMemo(() => {
+    return filtered.reduce((sum, o) => sum + o.qty, 0);
+  }, [filtered]);
 
   const getProduct = (id: number) => products.find((p) => p.id === id);
 
@@ -772,62 +867,129 @@ function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange,
       <div className="mx-auto max-w-[1250px] px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
         <p className="text-sm font-medium text-[#e85d04]">Order management</p>
         <h2 className="mt-2 font-serif text-[32px] font-semibold">All orders</h2>
-        <p className="mt-1 text-sm text-[#968d86]">Manage customer orders, update status, and generate bills.</p>
+        <p className="mt-1 text-sm text-[#968d86]">Track customer orders, check handover deadlines, and update status.</p>
+
+        {/* Highlighted Banner when filtered by Product */}
+        {activeFilteredProduct && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-[#e85d04] bg-[#fff8f3] p-5 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-[#e85d04] text-white shadow-sm">
+                <Package className="size-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#e85d04]">Filtered by sweet</span>
+                  <span className="rounded-full bg-[#fae8dc] px-2.5 py-0.5 text-[11px] font-semibold text-[#8a4a1f]">
+                    {filtered.length} customer order{filtered.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <h3 className="font-serif text-2xl font-bold text-[#312d2a]">{activeFilteredProduct.name}</h3>
+                <p className="mt-0.5 text-xs text-[#766e68]">
+                  Showing everyone who ordered {activeFilteredProduct.name} and their exact handover delivery dates.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-5">
+              <div className="text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#968d86]">Total to Produce</p>
+                <p className="font-serif text-2xl font-bold text-[#e85d04]">
+                  {totalFilteredKg.toFixed(2)} <span className="text-sm font-normal text-[#766e68]">{activeFilteredProduct.unit}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setFilterProductId("All");
+                  onClearProductFilter?.();
+                }}
+                className="flex items-center gap-1.5 rounded-xl border border-[#eadfd7] bg-white px-3.5 py-2 text-xs font-semibold text-[#766e68] hover:bg-[#faf5f1] hover:text-[#312d2a] transition-colors shadow-sm"
+              >
+                <X className="size-3.5" /> Show All Sweets
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
-        <div className="mt-7 flex flex-wrap items-center gap-3 rounded-2xl border border-[#eadfd7] bg-white p-4">
-          <label className="flex flex-1 min-w-[180px] items-center gap-2 rounded-lg border border-[#eee5df] px-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#eadfd7] bg-white p-4">
+          <label className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-[#eee5df] px-3">
             <Search className="size-4 shrink-0 text-[#b4a79f]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search customers, products…"
+              placeholder="Search customer, order ID, notes…"
               className="w-full bg-transparent py-2 text-sm outline-none"
             />
           </label>
+          <select
+            value={filterProductId}
+            onChange={(e) => {
+              setFilterProductId(e.target.value);
+              if (e.target.value === "All") onClearProductFilter?.();
+            }}
+            className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm font-medium outline-none focus:border-[#e85d04]"
+          >
+            <option value="All">All Sweets ({products.length})</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm outline-none focus:border-[#e85d04]"
           >
             <option value="All">All statuses</option>
-            {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
           </select>
           <input
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
             className="rounded-xl border border-[#eadfd7] bg-[#fffaf6] px-3 py-2 text-sm outline-none focus:border-[#e85d04]"
-            title="Filter by date"
+            title="Filter by delivery or order date"
           />
-          {(query || filterStatus !== "All" || filterDate) && (
+          {(query || filterProductId !== "All" || filterStatus !== "All" || filterDate) && (
             <button
-              onClick={() => { setQuery(""); setFilterStatus("All"); setFilterDate(""); }}
+              onClick={() => {
+                setQuery("");
+                setFilterProductId("All");
+                setFilterStatus("All");
+                setFilterDate("");
+                onClearProductFilter?.();
+              }}
               className="rounded-xl border border-[#eadfd7] px-3 py-2 text-sm font-medium text-[#766e68] hover:bg-[#faf5f1]"
             >
-              Clear
+              Clear all
             </button>
           )}
-          <span className="ml-auto text-xs font-semibold text-[#a18f84]">{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
+          <span className="ml-auto text-xs font-semibold text-[#a18f84]">
+            {filtered.length} order{filtered.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
-        {/* Table */}
+        {/* Orders Table */}
         {filtered.length === 0 ? (
           <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#eadfd7] bg-white py-20 text-center">
             <ClipboardList className="size-10 text-[#e85d04]" />
             <p className="mt-4 font-serif text-xl font-semibold">No orders found</p>
-            <p className="mt-2 text-sm text-[#968d86]">{orders.length === 0 ? "Create your first order to get started." : "Try adjusting your search or filters."}</p>
+            <p className="mt-2 text-sm text-[#968d86]">
+              {orders.length === 0 ? "Create your first order to get started." : "Try adjusting your search or filters."}
+            </p>
           </div>
         ) : (
           <div className="mt-5 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
+              <table className="w-full min-w-[960px] text-left text-sm">
                 <thead className="border-b border-[#eee5df] bg-[#fffaf6] text-[11px] uppercase tracking-[0.12em] text-[#a18f84]">
                   <tr>
-                    <th className="px-5 py-4">Date</th>
-                    <th className="px-5 py-4">Customer</th>
-                    <th className="px-5 py-4">Product</th>
-                    <th className="px-5 py-4">Qty</th>
+                    <th className="px-5 py-4">Customer (Who Ordered)</th>
+                    <th className="px-5 py-4">Sweet Product</th>
+                    <th className="px-5 py-4">Quantity</th>
+                    <th className="px-5 py-4">Handover / Delivery Date</th>
                     <th className="px-5 py-4">Amount</th>
                     <th className="px-5 py-4">Status</th>
                     <th className="px-5 py-4 text-right">Actions</th>
@@ -838,26 +1000,60 @@ function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange,
                     const prod = getProduct(order.productId);
                     const rate = order.rate ?? prod?.price ?? 0;
                     const total = order.qty * rate;
+                    const badge = getHandoverBadge(order.deliveryDate);
+
                     return (
                       <tr key={order.id} className="border-b border-[#f2ece7] last:border-0 hover:bg-[#fffaf6] transition-colors">
-                        <td className="px-5 py-4 text-[#81766e]">
-                          <p>{dateLabel(order.date)}</p>
-                          <p className="text-[11px] text-[#a59a92]">Del: {dateLabel(order.deliveryDate)}</p>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                              {order.customer.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-[#312d2a]">{order.customer}</p>
+                              <div className="flex items-center gap-1.5 text-xs text-[#a59a92]">
+                                <span className="font-mono">{order.id}</span>
+                                {order.notes && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="italic text-[#766e68] max-w-[180px] truncate" title={order.notes}>
+                                      "{order.notes}"
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-5 py-4">
-                          <p className="font-semibold">{order.customer}</p>
-                          <p className="text-xs text-[#a59a92]">{order.id}</p>
+                          <p className="font-medium text-[#312d2a]">{prod?.name ?? "—"}</p>
+                          <p className="text-xs text-[#a59a92]">{money(rate)} / {prod?.unit ?? "kg"}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <p>{prod?.name ?? "—"}</p>
-                          {order.notes && <p className="text-xs text-[#a59a92] truncate max-w-[140px]">{order.notes}</p>}
+                          <span className="font-serif text-base font-semibold text-[#e85d04]">{order.qty}</span>
+                          <span className="ml-1 text-xs text-[#766e68]">{prod?.unit ?? "kg"}</span>
                         </td>
-                        <td className="px-5 py-4">{order.qty} {prod?.unit ?? "kg"}</td>
-                        <td className="px-5 py-4 font-semibold font-serif">{money(total)}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="size-3.5 text-[#e85d04]" />
+                              <span className="font-semibold text-sm text-[#312d2a]">{dateLabel(order.deliveryDate)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {badge && (
+                                <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${badge.style}`}>
+                                  {badge.label}
+                                </span>
+                              )}
+                              <span className="text-[11px] text-[#a59a92]">Placed: {dateLabel(order.date)}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 font-serif font-semibold text-[#312d2a]">{money(total)}</td>
                         <td className="px-5 py-4">
                           <StatusDropdown value={order.status} onChange={(v) => onStatusChange(order.id, v)} />
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               size="sm"
@@ -870,12 +1066,14 @@ function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange,
                             <button
                               onClick={() => setEditOrder(order)}
                               className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fff0e6] hover:text-[#e85d04] hover:border-[#e85d04] transition-colors"
+                              title="Edit order"
                             >
                               <Edit2 className="size-3.5" />
                             </button>
                             <button
                               onClick={() => setDeleteId(order.id)}
                               className="rounded-lg border border-[#eadfd7] p-2 text-[#766e68] hover:bg-[#fbe9e7] hover:text-[#b33a2b] hover:border-[#b33a2b] transition-colors"
+                              title="Delete order"
                             >
                               <Trash2 className="size-3.5" />
                             </button>
@@ -915,21 +1113,25 @@ function OrdersPage({ orders, products, onAdd, onEdit, onDelete, onStatusChange,
 }
 
 // --- Dashboard ---
-function Dashboard({ orders, products, setActive }: {
+function Dashboard({ orders, products, setActive, onViewProductOrders }: {
   orders: Order[]; products: Product[]; setActive: (v: string) => void;
+  onViewProductOrders: (productId: number) => void;
 }) {
   const [expandCustomers, setExpandCustomers] = useState(false);
+  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
 
   const activeOrders = orders.filter((o) => !["Completed", "Cancelled"].includes(o.status));
 
   const totalKg = activeOrders.reduce((sum, o) => sum + o.qty, 0);
-  const activeProducts = products.filter((p) => p.active).length;
+  const activeProductCount = products.filter((p) => p.active).length;
 
-  // Per-product breakdown
+  // Per-product breakdown with full order list
   const productBreakdown = products.map((p) => {
-    const orderList = activeOrders.filter((o) => o.productId === p.id);
+    const orderList = activeOrders
+      .filter((o) => o.productId === p.id)
+      .sort((a, b) => a.deliveryDate.localeCompare(b.deliveryDate));
     const kg = orderList.reduce((sum, o) => sum + o.qty, 0);
-    return { product: p, kg, count: orderList.length };
+    return { product: p, kg, count: orderList.length, orders: orderList };
   }).filter((b) => b.count > 0);
 
   // Status summary
@@ -960,7 +1162,7 @@ function Dashboard({ orders, products, setActive }: {
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[
             { label: "Total kg (active orders)", value: totalKg.toFixed(2), suffix: "kg" },
-            { label: "Active products", value: activeProducts.toString(), suffix: "items" },
+            { label: "Active products", value: activeProductCount.toString(), suffix: "items" },
             { label: "Active orders", value: activeOrders.length.toString(), suffix: "orders" },
           ].map(({ label, value, suffix }) => (
             <div key={label} className="rounded-2xl border border-[#eadfd7] bg-white p-5">
@@ -973,29 +1175,113 @@ function Dashboard({ orders, products, setActive }: {
           ))}
         </div>
 
-        {/* Product breakdown */}
+        {/* Product breakdown — clickable to show order details */}
         {productBreakdown.length > 0 && (
           <div className="mt-8">
             <h3 className="font-serif text-xl font-semibold">Production breakdown</h3>
-            <p className="mt-1 text-sm text-[#9c938c]">Quantity required per product (active orders).</p>
+            <p className="mt-1 text-sm text-[#9c938c]">Click a product to see who ordered and delivery schedule.</p>
             <div className="mt-4 overflow-hidden rounded-2xl border border-[#eadfd7] bg-white">
-              {productBreakdown.map(({ product, kg, count }) => (
-                <div key={product.id} className="flex items-center justify-between border-b border-[#f2ece7] px-5 py-4 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
-                      {product.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{product.name}</p>
-                      <p className="text-xs text-[#a59a92]">{count} order{count !== 1 ? "s" : ""}</p>
-                    </div>
+              {productBreakdown.map(({ product, kg, count, orders: productOrders }) => {
+                const isExpanded = expandedProductId === product.id;
+                return (
+                  <div key={product.id} className="border-b border-[#f2ece7] last:border-0">
+                    {/* Clickable product row */}
+                    <button
+                      onClick={() => setExpandedProductId(isExpanded ? null : product.id)}
+                      className={`flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-[#fffaf6] ${isExpanded ? "bg-[#fffaf6]" : ""}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff0e6] text-xs font-bold text-[#c65016]">
+                          {product.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                        </div>
+                        <div>
+                          <p className="font-semibold">{product.name}</p>
+                          <p className="text-xs text-[#a59a92]">{count} order{count !== 1 ? "s" : ""} · Click to view details</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-serif text-xl font-semibold">{kg.toFixed(2)}</p>
+                          <p className="text-xs text-[#a59a92]">{product.unit}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewProductOrders(product.id);
+                          }}
+                          className="rounded-lg border border-[#eadfd7] bg-white px-2.5 py-1 text-xs font-semibold text-[#e85d04] hover:bg-[#fff0e6] hover:border-[#e85d04] transition-colors shadow-xs"
+                          title="View customer orders and handover dates"
+                        >
+                          Orders →
+                        </button>
+                        <ChevronRight className={`size-4 text-[#a18f84] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                      </div>
+                    </button>
+
+                    {/* Expanded order details */}
+                    {isExpanded && (
+                      <div className="border-t border-[#f2ece7] bg-[#fefbf8]">
+                        {/* Column header */}
+                        <div className="grid grid-cols-[1fr_80px_130px_110px] gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a18f84] border-b border-[#f2ece7]">
+                          <span>Customer (Who Ordered)</span>
+                          <span className="text-right">Qty</span>
+                          <span className="text-right">Handover Date</span>
+                          <span className="text-right">Status</span>
+                        </div>
+                        {/* Order rows */}
+                        {productOrders.map((o) => {
+                          const badge = getHandoverBadge(o.deliveryDate);
+                          return (
+                            <div
+                              key={o.id}
+                              className="grid grid-cols-[1fr_80px_130px_110px] gap-2 items-center px-5 py-3 border-b border-[#f5f0ec] last:border-0 hover:bg-[#fff7f1] transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#fff0e6] text-[10px] font-bold text-[#c65016]">
+                                  {o.customer.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold truncate text-[#312d2a]">{o.customer}</p>
+                                  <p className="text-[11px] text-[#a59a92]">{o.id}{o.notes ? ` · "${o.notes}"` : ""}</p>
+                                </div>
+                              </div>
+                              <p className="text-sm font-semibold text-right text-[#e85d04]">{o.qty} {product.unit}</p>
+                              <div className="text-right">
+                                <div className="inline-flex items-center gap-1 text-sm justify-end">
+                                  <Calendar className="size-3 text-[#e85d04]" />
+                                  <span className="font-semibold text-[#312d2a]">{dateLabel(o.deliveryDate)}</span>
+                                </div>
+                                {badge && (
+                                  <div className="mt-0.5">
+                                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.2 text-[9px] font-bold ${badge.style}`}>
+                                      {badge.label}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <Badge status={o.status} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Footer with View in Orders action */}
+                        <div className="flex items-center justify-between border-t border-[#eadfd7] bg-[#fffaf6] px-5 py-3">
+                          <p className="text-xs text-[#968d86]">
+                            Total: <strong className="text-[#312d2a]">{kg.toFixed(2)} {product.unit}</strong> across {count} order{count !== 1 ? "s" : ""}
+                          </p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onViewProductOrders(product.id); }}
+                            className="flex items-center gap-1.5 rounded-lg bg-[#e85d04] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#c94f05] transition-colors"
+                          >
+                            View all in Orders <ArrowRight className="size-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-serif text-xl font-semibold">{kg.toFixed(2)}</p>
-                    <p className="text-xs text-[#a59a92]">{product.unit}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1097,6 +1383,13 @@ export default function Home() {
   const [orders, setOrders] = useState<Order[]>(ORDERS_SEED);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [nextProductId, setNextProductId] = useState(4);
+  const [initialProductFilter, setInitialProductFilter] = useState<number | null>(null);
+
+  // Navigate to Orders filtered by a specific product (from Dashboard)
+  const viewProductOrders = (productId: number) => {
+    setInitialProductFilter(productId);
+    setActive("Orders");
+  };
 
   // Product CRUD
   const addProduct = (data: ProductFormData) => {
@@ -1170,7 +1463,7 @@ export default function Home() {
       />
       <main className="min-h-screen lg:ml-[258px]">
         {active === "Dashboard" && (
-          <Dashboard orders={orders} products={products} setActive={setActive} />
+          <Dashboard orders={orders} products={products} setActive={setActive} onViewProductOrders={viewProductOrders} />
         )}
         {active === "Orders" && (
           <OrdersPage
@@ -1181,14 +1474,18 @@ export default function Home() {
             onDelete={deleteOrder}
             onStatusChange={updateStatus}
             onGenerate={generateInvoice}
+            initialProductFilter={initialProductFilter}
+            onClearProductFilter={() => setInitialProductFilter(null)}
           />
         )}
         {active === "Products" && (
           <ProductsPage
             products={products}
+            orders={orders}
             onAdd={addProduct}
             onEdit={editProduct}
             onDelete={deleteProduct}
+            onViewProductOrders={viewProductOrders}
           />
         )}
       </main>
